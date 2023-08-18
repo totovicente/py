@@ -1,0 +1,100 @@
+juan vicente
+django-admin --version
+venv\Scripts\activate (Windows)
+from django.db import models
+
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+
+    def _str_(self):
+        return self.nombre
+
+class Producto(models.Model):
+    nombre = models.CharField(max_length=100)
+    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField()
+
+    def _str_(self):
+        return self.nombre
+from django.shortcuts import render
+from .models import Categoria, Producto
+from .forms import CategoriaForm, ProductoForm, BusquedaForm
+
+def index(request):
+    return render(request, 'miapp/index.html')
+
+def agregar_categoria(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = CategoriaForm()
+    return render(request, 'miapp/agregar_categoria.html', {'form': form})
+
+def agregar_producto(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST)
+        if form.is_valid():
+            form.save()
+    else:
+        form = ProductoForm()
+    return render(request, 'miapp/agregar_producto.html', {'form': form})
+
+def buscar(request):
+    resultados = None
+    if request.method == 'POST':
+        form = BusquedaForm(request.POST)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            resultados = Producto.objects.filter(nombre__icontains=query)
+    else:
+        form = BusquedaForm()
+    return render(request, 'miapp/buscar.html', {'form': form, 'resultados': resultados})
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('agregar-categoria/', views.agregar_categoria, name='agregar_categoria'),
+    path('agregar-producto/', views.agregar_producto, name='agregar_producto'),
+    path('buscar/', views.buscar, name='buscar'),
+]
+from django import forms
+from .models import Categoria, Producto
+
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = ['nombre', 'descripcion']
+
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = ['nombre', 'categoria', 'precio', 'stock']
+
+class BusquedaForm(forms.Form):
+    query = forms.CharField(max_length=100, label='Buscar')
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Mi Proyecto{% endblock %}</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{% url 'index' %}">Inicio</a></li>
+            <li><a href="{% url 'agregar_categoria' %}">Agregar Categoría</a></li>
+            <li><a href="{% url 'agregar_producto' %}">Agregar Producto</a></li>
+            <li><a href="{% url 'buscar' %}">Buscar</a></li>
+        </ul>
+    </nav>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+git add .
+git commit -m "Proyecto inicial con modelos, vistas, formularios y plantillas"
